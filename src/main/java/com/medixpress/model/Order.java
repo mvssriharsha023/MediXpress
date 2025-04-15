@@ -24,10 +24,10 @@ public class Order {
 
     private Double totalAmount;
 
-    private LocalDateTime orderDate;
+    private LocalDateTime orderDateTime;
 
     private String status;
-    
+
     private List<OrderItem> items;
 }
 

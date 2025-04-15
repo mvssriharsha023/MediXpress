@@ -20,9 +20,9 @@ public class OrderItem {
 
     private Integer quantity;
 
-    private Double price; // price per unit at time of order
+    private Double pricePerUnit; // price per unit at time of order
+    private Double totalPrice;
 
-
-    private Order order;
+    private String orderId;
 }
 
