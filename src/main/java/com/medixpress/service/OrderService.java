@@ -13,6 +13,8 @@ public interface OrderService {
 
     List<OrderResponseDTO> getOrdersByUser(String userId);
 
+    List<OrderResponseDTO> getOrdersByPharmacy(String pharmacyId);
+
     OrderResponseDTO getOrderDetails(String orderId);
 }
 

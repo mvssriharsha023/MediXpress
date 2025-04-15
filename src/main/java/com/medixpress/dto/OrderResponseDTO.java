@@ -1,6 +1,7 @@
 package com.medixpress.dto;
 
 
+import com.medixpress.model.OrderStatus;
 import lombok.*;
 
 import java.time.LocalDateTime;
@@ -15,7 +16,7 @@ public class OrderResponseDTO {
     private String userId;
     private String pharmacyId;
     private Double totalAmount;
-    private String status;
+    private OrderStatus status;
     private LocalDateTime orderDateTime;
     private List<OrderItemDTO> items;
 }

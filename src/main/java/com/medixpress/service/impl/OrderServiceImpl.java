@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -57,6 +58,8 @@ public class OrderServiceImpl implements OrderService {
 
         double total = 0.0;
 
+        List<OrderItem> orderItems = new ArrayList<>();
+
         for (CartItem item : cartItems) {
             Medicine med = medicineRepository.findById(item.getMedicineId())
                     .orElseThrow(() -> new RuntimeException("Medicine not found"));
@@ -76,6 +79,7 @@ public class OrderServiceImpl implements OrderService {
                     .build();
 
             orderItemRepository.save(orderItem);
+            orderItems.add(orderItem);
 
             // Update stock
             med.setQuantity(med.getQuantity() - item.getQuantity());
@@ -84,6 +88,7 @@ public class OrderServiceImpl implements OrderService {
             total += price;
         }
 
+        order.setItems(orderItems);
         order.setTotalAmount(total);
         orderRepository.save(order);
 
@@ -94,15 +99,74 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public List<OrderResponseDTO> getOrdersByUser(String userId) {
+//        return orderRepository.findByUserId(userId).stream()
+//                .map(order -> OrderResponseDTO.builder()
+//                        .id(order.getId())
+//                        .userId(order.getUserId())
+//                        .pharmacyId(order.getPharmacyId())
+//                        .orderDateTime(order.getOrderDateTime())
+//                        .totalAmount(order.getTotalAmount())
+//                        .build())
+//                .collect(Collectors.toList());
         return orderRepository.findByUserId(userId).stream()
-                .map(order -> OrderResponseDTO.builder()
-                        .id(order.getId())
-                        .userId(order.getUserId())
-                        .pharmacyId(order.getPharmacyId())
-                        .orderDateTime(order.getOrderDateTime())
-                        .totalAmount(order.getTotalAmount())
-                        .build())
+                .map(order -> {
+                    List<OrderItemDTO> items = orderItemRepository.findByOrderId(order.getId())
+                            .stream()
+                            .map(item -> OrderItemDTO.builder()
+                                    .medicineId(item.getMedicineId())
+                                    .quantity(item.getQuantity())
+                                    .pricePerUnit(item.getPricePerUnit())
+                                    .totalPrice(item.getTotalPrice())
+                                    .build())
+                            .collect(Collectors.toList());
+
+                    return OrderResponseDTO.builder()
+                            .id(order.getId())
+                            .userId(order.getUserId())
+                            .pharmacyId(order.getPharmacyId())
+                            .orderDateTime(order.getOrderDateTime())
+                            .totalAmount(order.getTotalAmount())
+                            .items(items)
+                            .build();
+                })
                 .collect(Collectors.toList());
+
+    }
+
+    @Override
+    public List<OrderResponseDTO> getOrdersByPharmacy(String pharmacyId) {
+//        return orderRepository.findByPharmacyId(pharmacyId).stream()
+//                .map(order -> OrderResponseDTO.builder()
+//                        .id(order.getId())
+//                        .userId(order.getUserId())
+//                        .pharmacyId(order.getPharmacyId())
+//                        .orderDateTime(order.getOrderDateTime())
+//                        .totalAmount(order.getTotalAmount())
+//                        .build())
+//                .collect(Collectors.toList());
+        return orderRepository.findByPharmacyId(pharmacyId).stream()
+                .map(order -> {
+                    List<OrderItemDTO> items = orderItemRepository.findByOrderId(order.getId())
+                            .stream()
+                            .map(item -> OrderItemDTO.builder()
+                                    .medicineId(item.getMedicineId())
+                                    .quantity(item.getQuantity())
+                                    .pricePerUnit(item.getPricePerUnit())
+                                    .totalPrice(item.getTotalPrice())
+                                    .build())
+                            .collect(Collectors.toList());
+
+                    return OrderResponseDTO.builder()
+                            .id(order.getId())
+                            .userId(order.getUserId())
+                            .pharmacyId(order.getPharmacyId())
+                            .orderDateTime(order.getOrderDateTime())
+                            .totalAmount(order.getTotalAmount())
+                            .items(items)
+                            .build();
+                })
+                .collect(Collectors.toList());
+
     }
 
     @Override

@@ -55,7 +55,6 @@ public class MedicineServiceImpl implements MedicineService {
             throw new RuntimeException("Not enough quantity to reduce");
         }
         if (newQuantity == 0) {
-            medicineRepository.deleteById(medicineId);
             return Optional.empty();
         }
         medicine.setQuantity(newQuantity);

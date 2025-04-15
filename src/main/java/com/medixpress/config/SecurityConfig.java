@@ -26,7 +26,10 @@ public class SecurityConfig {
                                 "/api/cart/clear/*",
                                 "/api/cart/remove/*",
                                 "api/cart/update/*",
-                                "/api/cart/user/*"
+                                "/api/cart/user/*",
+                                "/api/orders/place/*",
+                                "/api/orders/user/*",
+                                "/api/orders/*"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )
