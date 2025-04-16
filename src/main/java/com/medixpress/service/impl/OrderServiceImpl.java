@@ -4,6 +4,7 @@ import com.medixpress.dto.OrderResponseDTO;
 import com.medixpress.dto.OrderItemDTO;
 import com.medixpress.exception.CartEmptyException;
 import com.medixpress.exception.MedicineNotFoundException;
+import com.medixpress.exception.OrderNotFoundException;
 import com.medixpress.exception.OutOfStockException;
 import com.medixpress.model.*;
 import com.medixpress.repository.CartRepository;
@@ -173,7 +174,7 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public OrderResponseDTO getOrderDetails(String orderId) {
         Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new RuntimeException("Order not found"));
+                .orElseThrow(() -> new OrderNotFoundException("Order not found"));
 
         List<OrderItemDTO> items = orderItemRepository.findByOrderId(orderId)
                 .stream()

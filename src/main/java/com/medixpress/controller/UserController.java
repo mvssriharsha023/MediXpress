@@ -4,6 +4,7 @@ import com.medixpress.dto.LoginRequest;
 import com.medixpress.dto.LoginResponse;
 import com.medixpress.dto.PharmacyDTO;
 import com.medixpress.dto.UserDTO;
+import com.medixpress.exception.UserNotExistException;
 import com.medixpress.model.Pharmacy;
 import com.medixpress.model.User;
 import com.medixpress.security.JwtUtil;
@@ -65,7 +66,7 @@ public class UserController {
             userService.deleteUser(id);
             return ResponseEntity.ok("Deleted User successfully");
         } catch (Exception e) {
-            throw new RuntimeException(e.getMessage());
+            throw new UserNotExistException("User Not Found!");
         }
 
     }

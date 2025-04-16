@@ -3,6 +3,10 @@ package com.medixpress.service.impl;
 import com.medixpress.dto.LoginRequest;
 import com.medixpress.dto.LoginResponse;
 import com.medixpress.dto.PharmacyDTO;
+import com.medixpress.exception.InvalidAddressException;
+import com.medixpress.exception.InvalidCredentialsException;
+import com.medixpress.exception.PharmacyAlreadyExistsException;
+import com.medixpress.exception.PharmacyNotFoundException;
 import com.medixpress.model.Pharmacy;
 import com.medixpress.repository.PharmacyRepository;
 import com.medixpress.security.JwtUtil;
@@ -32,12 +36,12 @@ public class PharmacyServiceImpl implements PharmacyService {
         Optional<Pharmacy> opPharmacyByContactNumber = pharmacyRepository.findByContactNumber(pharmacyDto.getContactNumber());
 
         if (opPharmacyByEmail.isPresent() || opPharmacyByContactNumber.isPresent()) {
-            throw new RuntimeException("Pharmacy with this email id or password already exists");
+            throw new PharmacyAlreadyExistsException("Pharmacy with this email id or password already exists");
         }
 
         double[] latLong = geoLocationService
                 .getLatLongFromAddress(pharmacyDto.getAddress())
-                .orElseThrow(() -> new RuntimeException("Invalid address"));
+                .orElseThrow(() -> new InvalidAddressException("Invalid address"));
 
 
         System.out.println(latLong[0] + " " + latLong[1]);
@@ -64,7 +68,7 @@ public class PharmacyServiceImpl implements PharmacyService {
     @Override
     public Pharmacy getPharmacyById(String id) {
         return pharmacyRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Pharmacy not found with id: " + id));
+                .orElseThrow(() -> new PharmacyNotFoundException("Pharmacy not found with id: " + id));
     }
 
     @Override
@@ -74,12 +78,12 @@ public class PharmacyServiceImpl implements PharmacyService {
         Optional<Pharmacy> opPharmacyByContactNumber = pharmacyRepository.findByContactNumber(dto.getContactNumber());
 
         if (opPharmacyByEmail.isPresent() || opPharmacyByContactNumber.isPresent()) {
-            throw new RuntimeException("Pharmacy with this email id or password already exists");
+            throw new PharmacyAlreadyExistsException("Pharmacy with this email id or phone number already exists");
         }
 
         double[] latLong = geoLocationService
                 .getLatLongFromAddress(dto.getAddress())
-                .orElseThrow(() -> new RuntimeException("Invalid address"));
+                .orElseThrow(() -> new InvalidAddressException("Invalid address"));
 
 
         Pharmacy existing = getPharmacyById(id);
@@ -101,11 +105,11 @@ public class PharmacyServiceImpl implements PharmacyService {
     @Override
     public LoginResponse loginPharmacy(LoginRequest loginRequest) {
         Pharmacy pharmacy = pharmacyRepository.findByEmail(loginRequest.getEmail())
-                .orElseThrow(() -> new RuntimeException("Invalid email or password"));
+                .orElseThrow(() -> new InvalidCredentialsException("Invalid email or password"));
 
         BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
         if (!passwordEncoder.matches(loginRequest.getPassword(), pharmacy.getPassword())) {
-            throw new RuntimeException("Invalid email or password");
+            throw new InvalidCredentialsException("Invalid email or password");
         }
 
         String token = jwtUtil.generateToken(pharmacy.getId());

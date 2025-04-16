@@ -3,6 +3,10 @@ package com.medixpress.service.impl;
 import com.medixpress.dto.LoginRequest;
 import com.medixpress.dto.LoginResponse;
 import com.medixpress.dto.UserDTO;
+import com.medixpress.exception.InvalidAddressException;
+import com.medixpress.exception.InvalidCredentialsException;
+import com.medixpress.exception.UserAlreadyExistsException;
+import com.medixpress.exception.UserNotExistException;
 import com.medixpress.model.User;
 import com.medixpress.repository.UserRepository;
 import com.medixpress.security.JwtUtil;
@@ -31,11 +35,11 @@ public class UserServiceImpl implements UserService {
         Optional<User> opUserByContactNumber = userRepository.findByContactNumber(userDTO.getContactNumber());
 
         if (opUserByEmail.isPresent() || opUserByContactNumber.isPresent()) {
-            throw new RuntimeException("User with this email id or password already exists");
+            throw new UserAlreadyExistsException("User with this email id or phone number already exists");
         }
         double[] latLong = geoLocationService
                 .getLatLongFromAddress(userDTO.getAddress())
-                .orElseThrow(() -> new RuntimeException("Invalid address"));
+                .orElseThrow(() -> new InvalidAddressException("Invalid address"));
 
 
         User user = User.builder()
@@ -54,11 +58,11 @@ public class UserServiceImpl implements UserService {
     @Override
     public LoginResponse loginUser(LoginRequest loginRequest) {
         User user = userRepository.findByEmail(loginRequest.getEmail())
-                .orElseThrow(() -> new RuntimeException("Invalid email or password"));
+                .orElseThrow(() -> new InvalidCredentialsException("Invalid email or password"));
 
         BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
         if (!passwordEncoder.matches(loginRequest.getPassword(), user.getPassword())) {
-            throw new RuntimeException("Invalid email or password");
+            throw new InvalidCredentialsException("Invalid email or password");
         }
 
         String token = jwtUtil.generateToken(user.getId());
@@ -77,7 +81,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public User getUserById(String id) {
-        return userRepository.findById(id).orElseThrow(() -> new RuntimeException("User not found"));
+        return userRepository.findById(id).orElseThrow(() -> new UserNotExistException("User not found"));
     }
 
     @Override
@@ -87,12 +91,12 @@ public class UserServiceImpl implements UserService {
         Optional<User> opUserByContactNumber = userRepository.findByContactNumber(dto.getContactNumber());
 
         if (opUserByEmail.isPresent() || opUserByContactNumber.isPresent()) {
-            throw new RuntimeException("User with this email id or password already exists");
+            throw new UserAlreadyExistsException("User with this email id or phone number already exists");
         }
 
         double[] latLong = geoLocationService
                 .getLatLongFromAddress(dto.getAddress())
-                .orElseThrow(() -> new RuntimeException("Invalid address"));
+                .orElseThrow(() -> new InvalidAddressException("Invalid address"));
 
 
         User existing = getUserById(id);

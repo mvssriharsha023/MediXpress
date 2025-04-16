@@ -1,6 +1,9 @@
 package com.medixpress.service.impl;
 
 import com.medixpress.dto.MedicineDTO;
+import com.medixpress.exception.MedicineNotFoundException;
+import com.medixpress.exception.OutOfStockException;
+import com.medixpress.exception.PharmacyNotFoundException;
 import com.medixpress.model.Medicine;
 import com.medixpress.model.Pharmacy;
 import com.medixpress.repository.MedicineRepository;
@@ -24,7 +27,7 @@ public class MedicineServiceImpl implements MedicineService {
     @Override
     public Medicine addOrUpdateMedicine(MedicineDTO medicineDTO) {
         Pharmacy pharmacy = pharmacyRepository.findById(medicineDTO.getPharmacyId())
-                .orElseThrow(() -> new RuntimeException("Pharmacy not found"));
+                .orElseThrow(() -> new PharmacyNotFoundException("Pharmacy not found"));
 
         // Check if the medicine already exists for this pharmacy
         Medicine existingMedicine = medicineRepository.findByNameAndPharmacyId(medicineDTO.getName(), medicineDTO.getPharmacyId());
@@ -49,10 +52,10 @@ public class MedicineServiceImpl implements MedicineService {
 
     @Override
     public Optional<Medicine> reduceMedicineQuantity(String medicineId, Integer quantity) {
-        Medicine medicine = medicineRepository.findById(medicineId).orElseThrow(() -> new RuntimeException("Medicine not found"));
+        Medicine medicine = medicineRepository.findById(medicineId).orElseThrow(() -> new MedicineNotFoundException("Medicine not found"));
         int newQuantity = medicine.getQuantity() - quantity;
         if (newQuantity < 0) {
-            throw new RuntimeException("Not enough quantity to reduce");
+            throw new OutOfStockException("Not enough quantity to reduce");
         }
         if (newQuantity == 0) {
             return Optional.empty();
@@ -70,13 +73,13 @@ public class MedicineServiceImpl implements MedicineService {
     @Override
     public List<Medicine> getAllMedicineByPharmacy(String pharmacyId) {
         pharmacyRepository.findById(pharmacyId)
-                .orElseThrow(() -> new RuntimeException("Pharmacy not found"));
+                .orElseThrow(() -> new PharmacyNotFoundException("Pharmacy not found"));
         return medicineRepository.findByPharmacyId(pharmacyId);
     }
 
     @Override
     public Medicine getMedicineById(String id) {
-        return medicineRepository.findById(id).orElseThrow(() -> new RuntimeException("Medicine not found"));
+        return medicineRepository.findById(id).orElseThrow(() -> new MedicineNotFoundException("Medicine not found"));
     }
 
     @Override
@@ -84,7 +87,7 @@ public class MedicineServiceImpl implements MedicineService {
         List<Medicine> medicines = medicineRepository.findByIdAndPharmacyId(medicineId, pharmacyId);
 
         if (medicines.isEmpty()) {
-            throw new RuntimeException("Medicine not found in this pharmacy");
+            throw new MedicineNotFoundException("Medicine not found in this pharmacy");
         }
 
         return medicines.getFirst().getQuantity(); // or .getStock() if that's your field
