@@ -2,6 +2,7 @@ package com.medixpress.model;
 
 public enum OrderStatus {
     PLACED,
-    SHIPPED,
-    DELIVERED
+    OUT_OF_DELIVERY,
+    DELIVERED,
+    CANCELLED
 }

@@ -2,10 +2,7 @@ package com.medixpress.service.impl;
 
 import com.medixpress.dto.OrderResponseDTO;
 import com.medixpress.dto.OrderItemDTO;
-import com.medixpress.exception.CartEmptyException;
-import com.medixpress.exception.MedicineNotFoundException;
-import com.medixpress.exception.OrderNotFoundException;
-import com.medixpress.exception.OutOfStockException;
+import com.medixpress.exception.*;
 import com.medixpress.model.*;
 import com.medixpress.repository.CartRepository;
 import com.medixpress.repository.MedicineRepository;
@@ -14,6 +11,8 @@ import com.medixpress.repository.OrderRepository;
 import com.medixpress.service.CartService;
 import com.medixpress.service.OrderService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatusCode;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -193,6 +192,43 @@ public class OrderServiceImpl implements OrderService {
                 .orderDateTime(order.getOrderDateTime())
                 .totalAmount(order.getTotalAmount())
                 .items(items)
+                .status(order.getStatus())
                 .build();
     }
+
+    public Order updateStatusByUser(String userId, String orderId, OrderStatus status) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new OrderNotFoundException("Order not found"));
+
+        if (status.toString().equals("CANCELLED")) {
+            if (order.getStatus().toString().equals("PLACED")) {
+                order.setStatus(OrderStatus.CANCELLED);
+            } else {
+                throw new OutForDeliveryException("This order is already out for delivery or delivered");
+            }
+
+        } else if (status.toString().equals("DELIVERED")) {
+            order.setStatus(OrderStatus.DELIVERED);
+        } else {
+            throw new UnauthorizedAccessException("Unauthorized access on this order");
+        }
+        orderRepository.save(order);
+        return order;
+    }
+
+    @Override
+    public Order updateStatusByPharmacy(String pharmacyId, String orderId, OrderStatus status) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new OrderNotFoundException("Order not found"));
+
+        if (status.toString().equals("OUT_OF_DELIVERY")) {
+            order.setStatus(OrderStatus.OUT_OF_DELIVERY);
+        } else {
+            throw new UnauthorizedAccessException("Unauthorized access on this order");
+        }
+        orderRepository.save(order);
+        return order;
+    }
+
+
 }
