@@ -1,7 +1,9 @@
 package com.medixpress.controller;
 
 import com.medixpress.dto.CartItemDTO;
+import com.medixpress.exception.AuthenticationException;
 import com.medixpress.model.CartItem;
+import com.medixpress.security.JwtUtil;
 import com.medixpress.service.CartService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -15,14 +17,25 @@ public class CartController {
 
     @Autowired
     private CartService cartService;
+    @Autowired
+    private JwtUtil jwtUtil;
 
     @PostMapping("/add")
-    public CartItem addToCart(@RequestBody CartItemDTO dto) {
+    public CartItem addToCart(@RequestHeader String token, @RequestBody CartItemDTO dto) {
+        if (token == null || token.isBlank()) {
+            throw new AuthenticationException("Please login to add medicines into cart");
+        }
+        String userId = jwtUtil.extractId(token);
+        dto.setUserId(userId);
         return cartService.addToCart(dto);
     }
 
-    @GetMapping("/user/{userId}")
-    public List<CartItemDTO> getUserCart(@PathVariable String userId) {
+    @GetMapping("/user")
+    public List<CartItemDTO> getUserCart(@RequestHeader String token) {
+        if (token == null || token.isBlank()) {
+            throw new AuthenticationException("Please login to view cart items");
+        }
+        String userId = jwtUtil.extractId(token);
         return cartService.getCartItemsByUser(userId);
     }
 
@@ -32,8 +45,12 @@ public class CartController {
         return ResponseEntity.ok("Removed " + cartItemId + " from cart successfully.");
     }
 
-    @DeleteMapping("/clear/{userId}")
-    public ResponseEntity<String> clearCart(@PathVariable String userId) {
+    @DeleteMapping("/clear")
+    public ResponseEntity<String> clearCart(@RequestHeader String token) {
+        if (token == null || token.isBlank()) {
+            throw new AuthenticationException("Please login to clear the cart");
+        }
+        String userId = jwtUtil.extractId(token);
         cartService.clearCart(userId);
         return ResponseEntity.ok("Clear cart successfully.");
     }

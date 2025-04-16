@@ -1,6 +1,9 @@
 package com.medixpress.service.impl;
 
 import com.medixpress.dto.CartItemDTO;
+import com.medixpress.exception.CartConflictException;
+import com.medixpress.exception.CartItemNotFoundException;
+import com.medixpress.exception.OutOfStockException;
 import com.medixpress.model.CartItem;
 import com.medixpress.repository.CartRepository;
 import com.medixpress.service.CartService;
@@ -27,7 +30,7 @@ public class CartServiceImpl implements CartService {
         List<CartItem> existingItems = cartRepository.findByUserId(dto.getUserId());
         if (!existingItems.isEmpty() &&
                 existingItems.stream().anyMatch(item -> !item.getPharmacyId().equals(dto.getPharmacyId()))) {
-            throw new RuntimeException("Cart contains items from another pharmacy. Please clear the cart first.");
+            throw new CartConflictException("Cart contains items from another pharmacy. Please clear the cart first.");
         }
 
         CartItem existingItem = existingItems.stream()
@@ -43,7 +46,7 @@ public class CartServiceImpl implements CartService {
         // ✅ Check if requested quantity is available
         int availableStock = medicineService.getAvailableQuantity(dto.getPharmacyId(), dto.getMedicineId());
         if (totalRequestedQuantity > availableStock) {
-            throw new RuntimeException("Requested quantity exceeds available stock.");
+            throw new OutOfStockException("Requested quantity exceeds available stock.");
         }
 
         if (existingItem != null) {
@@ -96,11 +99,11 @@ public class CartServiceImpl implements CartService {
     @Override
     public CartItemDTO updateQuantity(String cartItemId, Integer newQuantity) {
         CartItem item = cartRepository.findById(cartItemId)
-                .orElseThrow(() -> new RuntimeException("Cart item not found"));
+                .orElseThrow(() -> new CartItemNotFoundException("Cart item not found"));
 
         int availableStock = medicineService.getAvailableQuantity(item.getPharmacyId(), item.getMedicineId());
         if (newQuantity > availableStock) {
-            throw new RuntimeException("Requested quantity exceeds available stock.");
+            throw new OutOfStockException("Requested quantity exceeds available stock.");
         }
 
         item.setQuantity(newQuantity);

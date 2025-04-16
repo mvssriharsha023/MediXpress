@@ -2,10 +2,10 @@ package com.medixpress.service.impl;
 
 import com.medixpress.dto.OrderResponseDTO;
 import com.medixpress.dto.OrderItemDTO;
-import com.medixpress.model.CartItem;
-import com.medixpress.model.Medicine;
-import com.medixpress.model.Order;
-import com.medixpress.model.OrderItem;
+import com.medixpress.exception.CartEmptyException;
+import com.medixpress.exception.MedicineNotFoundException;
+import com.medixpress.exception.OutOfStockException;
+import com.medixpress.model.*;
 import com.medixpress.repository.CartRepository;
 import com.medixpress.repository.MedicineRepository;
 import com.medixpress.repository.OrderItemRepository;
@@ -43,7 +43,7 @@ public class OrderServiceImpl implements OrderService {
     public Order placeOrder(String userId) {
         List<CartItem> cartItems = cartRepository.findByUserId(userId);
         if (cartItems.isEmpty()) {
-            throw new RuntimeException("Cart is empty");
+            throw new CartEmptyException("Cart is empty");
         }
 
         // Create order
@@ -62,10 +62,10 @@ public class OrderServiceImpl implements OrderService {
 
         for (CartItem item : cartItems) {
             Medicine med = medicineRepository.findById(item.getMedicineId())
-                    .orElseThrow(() -> new RuntimeException("Medicine not found"));
+                    .orElseThrow(() -> new MedicineNotFoundException("Medicine not found"));
 
             if (med.getQuantity() < item.getQuantity()) {
-                throw new RuntimeException("Medicine " + med.getName() + " is out of stock.");
+                throw new OutOfStockException("Medicine " + med.getName() + " is out of stock.");
             }
 
             double price = med.getPrice() * item.getQuantity();
@@ -90,6 +90,7 @@ public class OrderServiceImpl implements OrderService {
 
         order.setItems(orderItems);
         order.setTotalAmount(total);
+        order.setStatus(OrderStatus.PLACED);
         orderRepository.save(order);
 
         // Clear the cart
