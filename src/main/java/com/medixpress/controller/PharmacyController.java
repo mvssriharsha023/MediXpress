@@ -66,9 +66,9 @@ public class PharmacyController {
 
     // Delete
     @DeleteMapping
-    public ResponseEntity<Void> deletePharmacy(@RequestHeader String token) {
+    public ResponseEntity<String> deletePharmacy(@RequestHeader String token) {
         String id = jwtUtil.extractId(token);
         pharmacyService.deletePharmacy(id);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok("Pharmacy Account deleted Successfully");
     }
 }
